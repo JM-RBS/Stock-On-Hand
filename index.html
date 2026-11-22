@@ -114,9 +114,6 @@
         <button type="button" onclick="startStaffLineLogin()" class="btn-press inline-flex items-center justify-center gap-2 h-12 px-6 rounded-2xl bg-[#06C755] hover:bg-[#05b34c] text-white font-bold text-sm shadow-md cursor-pointer">
           เชื่อมต่อบัญชี LINE
         </button>
-        <div class="max-w-md mx-auto pt-2 text-[11px] text-slate-400 break-all">
-          Callback URL: <span id="debugCallbackUrl" class="font-mono text-slate-600 select-all"></span>
-        </div>
       </div>
 
       <!-- STEP B: BIND EMPLOYEE ID -->
@@ -369,8 +366,6 @@
     }
 
     window.addEventListener('DOMContentLoaded', function() {
-      var cbEl = document.getElementById('debugCallbackUrl');
-      if (cbEl) cbEl.textContent = APP_URL;
 
       loadCatalog();
 
@@ -446,6 +441,7 @@
     }
 
     function applyCatalogData(res) {
+      if (res.lineChannelId) LINE_CHANNEL_ID = res.lineChannelId;
       STATE.brands = res.brands || [];
       STATE.models = res.models || [];
 
