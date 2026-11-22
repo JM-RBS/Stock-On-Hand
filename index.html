@@ -28,48 +28,50 @@
 </head>
 <body class="min-h-[100dvh] flex flex-col bg-[#F8FAFC] text-slate-900">
 
-  <!-- Top Header -->
+  <!-- Top Header (Centered Layout) -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2.5 sm:py-3 space-y-2.5">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C8102E] shadow-xs shrink-0 select-none">
-            <span class="px-2 py-0.5 rounded-full bg-white text-[#C8102E] font-extrabold text-xs tracking-tight leading-none">Jaymart</span>
-            <span class="text-white font-extrabold text-xs tracking-wide leading-none">STOCK</span>
-          </div>
-          <div class="min-w-0">
-            <h1 class="text-sm sm:text-base font-bold text-slate-900 truncate">เช็กสต็อก &amp; สเปกสินค้า</h1>
-            <span id="lastUpdateBadge" class="inline-block text-[11px] font-semibold text-slate-500 font-num">กำลังโหลดข้อมูล...</span>
-          </div>
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-3 space-y-2.5 text-center">
+      <!-- Brand & Title Centered -->
+      <div class="flex flex-col items-center justify-center gap-1.5">
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#C8102E] shadow-xs select-none">
+          <span class="px-2 py-0.5 rounded-full bg-white text-[#C8102E] font-extrabold text-xs tracking-tight leading-none">Jaymart</span>
+          <span class="text-white font-extrabold text-xs tracking-wide leading-none">STOCK</span>
         </div>
+        <h1 class="text-base sm:text-lg font-extrabold text-slate-900 leading-tight">เช็กสต็อก &amp; สเปกสินค้า</h1>
+        <span id="lastUpdateBadge" class="inline-block text-[11px] font-semibold text-slate-500 font-num">กำลังโหลดข้อมูล...</span>
+      </div>
 
-        <div class="flex items-center gap-1.5 sm:gap-2">
-          <span id="staffActiveBadge" class="hidden inline-flex items-center h-9 px-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold truncate max-w-[140px]"></span>
-          <button id="btnStaffPortal" type="button" onclick="openStaffPortal()" title="เข้าสู่ระบบพนักงาน / อัปโหลดสต็อก" class="btn-press inline-flex items-center justify-center gap-1.5 h-9 sm:h-10 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold cursor-pointer whitespace-nowrap">
-            <svg id="staffBtnLineIcon" class="w-4 h-4 text-[#06C755] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.58 2 11c0 3.92 3.55 7.19 8.35 7.87.33.07.77.22.88.5.1.26.07.66.03.92l-.14.84c-.04.26-.2 1.01.88.55 1.08-.46 5.83-3.43 7.95-5.88C21.35 14.3 22 12.73 22 11c0-4.42-4.48-8-10-8z"/></svg>
-            <svg id="staffBtnUploadIcon" class="hidden w-5 h-5 text-[#C8102E] shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
-            <span id="btnStaffPortalText">สำหรับพนักงาน</span>
-          </button>
-        </div>
+      <!-- Action Buttons Centered -->
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <span id="staffActiveBadge" class="hidden inline-flex items-center h-9 px-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold truncate max-w-[160px]"></span>
+        <button id="btnExportPdf" type="button" onclick="openPdfExportModal()" class="btn-press inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[#C8102E] text-xs font-bold cursor-pointer whitespace-nowrap">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>ดาวน์โหลด PDF</span>
+        </button>
+        <button id="btnStaffPortal" type="button" onclick="openStaffPortal()" title="เข้าสู่ระบบพนักงาน / อัปโหลดสต็อก" class="btn-press inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer whitespace-nowrap">
+          <svg id="staffBtnLineIcon" class="w-4 h-4 text-[#06C755] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.58 2 11c0 3.92 3.55 7.19 8.35 7.87.33.07.77.22.88.5.1.26.07.66.03.92l-.14.84c-.04.26-.2 1.01.88.55 1.08-.46 5.83-3.43 7.95-5.88C21.35 14.3 22 12.73 22 11c0-4.42-4.48-8-10-8z"/></svg>
+          <svg id="staffBtnUploadIcon" class="hidden w-4 h-4 text-[#C8102E] shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+          <span id="btnStaffPortalText">สำหรับพนักงาน</span>
+        </button>
       </div>
 
       <!-- 3-Day Stale Stock Warning -->
-      <div id="staleAlertBanner" class="hidden px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+      <div id="staleAlertBanner" class="hidden max-w-2xl mx-auto px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center justify-center gap-2">
         <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.65 18.5h16.7a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"/></svg>
         <span id="staleAlertText">สต็อกไม่ได้อัปเดตเกิน 3 วันแล้ว รบกวนพนักงานอัปโหลดไฟล์ PDF ล่าสุด</span>
       </div>
 
-      <!-- Search & Count -->
-      <div class="flex flex-col sm:flex-row gap-2">
+      <!-- Search & Count Centered -->
+      <div class="max-w-2xl mx-auto flex flex-col sm:flex-row gap-2">
         <div class="relative flex-1 min-w-0">
           <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input id="searchInput" type="text" oninput="renderCatalog()" placeholder="ค้นหารุ่นสินค้า ความจุ หรือสี..." class="w-full h-10 pl-10 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:bg-white focus:border-slate-400">
+          <input id="searchInput" type="text" oninput="renderCatalog()" placeholder="ค้นหารุ่นสินค้า ความจุ หรือสี..." class="w-full h-10 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:bg-white focus:border-slate-400">
         </div>
-        <div id="resultCount" class="h-10 px-3.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center whitespace-nowrap font-num">0 รุ่น</div>
+        <div id="resultCount" class="h-10 px-4 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center whitespace-nowrap font-num">0 รุ่น</div>
       </div>
 
-      <!-- Brand Filter Tabs -->
-      <div id="brandTabsContainer" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5"></div>
+      <!-- Brand Filter Tabs Centered -->
+      <div id="brandTabsContainer" class="flex flex-wrap items-center justify-center gap-1.5 pb-0.5"></div>
     </div>
   </header>
 
@@ -86,9 +88,43 @@
 
     <div id="emptyState" class="hidden py-16 text-center bg-white rounded-3xl border border-slate-200">
       <p class="text-base font-bold text-slate-700">ยังไม่มีรายการสินค้าในสต็อกตามเงื่อนไขที่เลือก</p>
-      <p class="text-xs text-slate-500 mt-1">พนักงานที่ล็อกอิน LINE แล้วสามารถกดไอคอนอัปโหลดด้านบนเพื่อนำเข้าไฟล์ PDF สต็อกล่าสุด</p>
+      <p class="text-xs text-slate-500 mt-1">พนักงานที่ล็อกอิน LINE แล้วสามารถกดปุ่มอัปโหลดด้านบนเพื่อนำเข้าไฟล์ PDF สต็อกล่าสุด</p>
     </div>
   </main>
+
+  <!-- PDF Export Brand Selector Modal -->
+  <div id="pdfExportModal" class="hidden fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[88dvh] flex flex-col">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">ดาวน์โหลดสต็อกเป็น PDF</h2>
+          <p class="text-[11px] text-slate-500">เลือกแบรนด์ที่ต้องการออกใบสรุปสต็อก</p>
+        </div>
+        <button type="button" onclick="closePdfExportModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs font-bold text-slate-700">เลือกแบรนด์</span>
+          <div class="flex items-center gap-2 text-xs">
+            <button type="button" onclick="toggleAllPdfBrands(true)" class="text-[#C8102E] font-bold hover:underline cursor-pointer">เลือกทั้งหมด</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" onclick="toggleAllPdfBrands(false)" class="text-slate-500 font-semibold hover:underline cursor-pointer">ล้างทั้งหมด</button>
+          </div>
+        </div>
+        <div id="pdfBrandCheckboxList" class="grid grid-cols-2 gap-2"></div>
+        <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer">
+          <input id="pdfIncludePriceCheck" type="checkbox" checked class="rounded border-slate-300">
+          <span>แสดงราคาปกติ (RRP) ในไฟล์ PDF</span>
+        </label>
+      </div>
+      <div class="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+        <button type="button" onclick="closePdfExportModal()" class="h-10 px-4 rounded-xl border border-slate-300 bg-white text-xs font-semibold cursor-pointer">ยกเลิก</button>
+        <button id="btnGenerateStockPdf" type="button" onclick="generateSelectedStockPdf()" class="btn-press h-10 px-5 rounded-xl bg-[#C8102E] hover:bg-red-700 text-white text-xs font-bold cursor-pointer">
+          สร้างและดาวน์โหลด PDF
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Staff Auth & Workspace Modal -->
   <div id="staffModal" class="hidden fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -232,7 +268,7 @@
           <div><label class="font-bold block mb-1">กล้องหน้า</label><input id="spFrontCam" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น 18MP"></div>
           <div><label class="font-bold block mb-1">แบตเตอรี่ / ชาร์จ</label><input id="spBattery" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น 5567 mAh · 40W"></div>
           <div><label class="font-bold block mb-1">กันน้ำ/ฝุ่น</label><input id="spIp" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น IP68"></div>
-          <div><label class="font-bold block mb-1">ราคาเสริม (ถ้าไม่มีใน Products)</label><input id="spCustomPrice" type="number" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="ปล่อยว่างเพื่อดึงจาก Products"></div>
+          <div><label class="font-bold block mb-1">ราคาเสริม (ถ้าไม่มีในชีตราคา)</label><input id="spCustomPrice" type="number" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="ปล่อยว่างเพื่อดึงอัตโนมัติ"></div>
         </div>
         <div class="pt-2 border-t border-slate-100 space-y-2">
           <label class="font-bold block">รูปภาพสินค้า (อัปโหลดขึ้น Drive หรือวางลิงก์)</label>
@@ -258,10 +294,12 @@
     var APP_URL = window.location.href.split('?')[0].split('#')[0];
     var STORAGE_SESSION_KEY = 'jm_stock_staff_session_v2';
     var pdfJsLoadedPromise = null;
+    var html2PdfLoadedPromise = null;
 
     var STATE = {
       brands: [],
       models: [],
+      lastUploadDate: '',
       activeBrand: 'ALL',
       selectedCapacityIdx: {},
       sessionToken: '',
@@ -365,8 +403,23 @@
       return pdfJsLoadedPromise;
     }
 
-    window.addEventListener('DOMContentLoaded', function() {
+    function ensureHtml2PdfLoaded() {
+      if (window.html2pdf) return Promise.resolve(window.html2pdf);
+      if (html2PdfLoadedPromise) return html2PdfLoadedPromise;
+      html2PdfLoadedPromise = new Promise(function(resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        s.onload = function() {
+          if (window.html2pdf) resolve(window.html2pdf);
+          else reject(new Error('โหลดตัวสร้าง PDF ไม่สำเร็จ'));
+        };
+        s.onerror = function() { reject(new Error('โหลดไลบรารีสร้าง PDF ไม่สำเร็จ')); };
+        document.head.appendChild(s);
+      });
+      return html2PdfLoadedPromise;
+    }
 
+    window.addEventListener('DOMContentLoaded', function() {
       loadCatalog();
 
       var urlParams = new URLSearchParams(window.location.search);
@@ -444,9 +497,10 @@
       if (res.lineChannelId) LINE_CHANNEL_ID = res.lineChannelId;
       STATE.brands = res.brands || [];
       STATE.models = res.models || [];
+      STATE.lastUploadDate = res.lastUploadDate || '';
 
       var badge = document.getElementById('lastUpdateBadge');
-      badge.textContent = res.lastUploadDate ? ('อัปเดต: ' + res.lastUploadDate) : 'ยังไม่มีข้อมูลสต็อก';
+      badge.textContent = res.lastUploadDate ? ('อัปเดตล่าสุด: ' + res.lastUploadDate) : 'ยังไม่มีข้อมูลสต็อก';
 
       var staleBanner = document.getElementById('staleAlertBanner');
       if (res.isStale) {
@@ -468,10 +522,10 @@
       container.innerHTML = all.map(function(b) {
         var active = STATE.activeBrand === b;
         var cnt = b === 'ALL' ? STATE.models.length : STATE.models.filter(function(m) { return m.brand === b; }).length;
-        return '<button type="button" onclick="selectBrand(\'' + escapeHtml(b) + '\')" class="btn-press inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl border text-xs sm:text-sm font-bold whitespace-nowrap cursor-pointer ' +
+        return '<button type="button" onclick="selectBrand(\'' + escapeHtml(b) + '\')" class="btn-press inline-flex items-center gap-1.5 h-8 sm:h-9 px-3 rounded-xl border text-xs font-bold whitespace-nowrap cursor-pointer ' +
           (active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50') + '">' +
           '<span>' + escapeHtml(b === 'ALL' ? 'ทั้งหมด' : b) + '</span>' +
-          '<span class="px-1.5 py-0.5 rounded-md text-[11px] font-num ' + (active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500') + '">' + cnt + '</span>' +
+          '<span class="px-1.5 py-0.5 rounded-md text-[10px] font-num ' + (active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500') + '">' + cnt + '</span>' +
         '</button>';
       }).join('');
     }
@@ -586,6 +640,154 @@
       }).join('');
     }
 
+    // ================= EXPORT STOCK TO PDF BY BRAND =================
+    function openPdfExportModal() {
+      if (!STATE.models.length) {
+        showToast('ยังไม่มีข้อมูลสต็อกสำหรับดาวน์โหลด');
+        return;
+      }
+      var listEl = document.getElementById('pdfBrandCheckboxList');
+      listEl.innerHTML = STATE.brands.map(function(b) {
+        var bModels = STATE.models.filter(function(m) { return m.brand === b; });
+        var totalUnits = 0;
+        bModels.forEach(function(m) {
+          (m.capacities || []).forEach(function(c) {
+            (c.colors || []).forEach(function(col) { totalUnits += Number(col.qty || 0); });
+          });
+        });
+        var checked = (STATE.activeBrand === 'ALL' || STATE.activeBrand === b) ? 'checked' : '';
+        return '<label class="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs">' +
+          '<span class="inline-flex items-center gap-2 font-bold text-slate-800 truncate">' +
+            '<input type="checkbox" name="pdfBrandCheck" value="' + escapeHtml(b) + '" ' + checked + ' class="rounded border-slate-300">' +
+            '<span class="truncate">' + escapeHtml(b) + '</span>' +
+          '</span>' +
+          '<span class="text-[10px] font-semibold text-slate-500 font-num shrink-0">' + bModels.length + ' รุ่น / ' + totalUnits + '</span>' +
+        '</label>';
+      }).join('');
+      document.getElementById('pdfExportModal').classList.remove('hidden');
+      ensureHtml2PdfLoaded().catch(function() {});
+    }
+
+    function closePdfExportModal() {
+      document.getElementById('pdfExportModal').classList.add('hidden');
+    }
+
+    function toggleAllPdfBrands(isChecked) {
+      document.querySelectorAll('input[name="pdfBrandCheck"]').forEach(function(el) {
+        el.checked = Boolean(isChecked);
+      });
+    }
+
+    async function generateSelectedStockPdf() {
+      var selectedBrands = [];
+      document.querySelectorAll('input[name="pdfBrandCheck"]:checked').forEach(function(el) {
+        selectedBrands.push(el.value);
+      });
+      if (!selectedBrands.length) {
+        showToast('กรุณาเลือกอย่างน้อย 1 แบรนด์');
+        return;
+      }
+
+      var includePrice = document.getElementById('pdfIncludePriceCheck').checked;
+      var btn = document.getElementById('btnGenerateStockPdf');
+      btn.disabled = true;
+      btn.textContent = 'กำลังสร้าง PDF...';
+
+      try {
+        await ensureHtml2PdfLoaded();
+        var filteredModels = STATE.models.filter(function(m) {
+          return selectedBrands.indexOf(m.brand) !== -1;
+        });
+
+        var totalUnits = 0;
+        filteredModels.forEach(function(m) {
+          (m.capacities || []).forEach(function(c) {
+            (c.colors || []).forEach(function(col) { totalUnits += Number(col.qty || 0); });
+          });
+        });
+
+        var brandSectionsHtml = selectedBrands.map(function(b) {
+          var bModels = filteredModels.filter(function(m) { return m.brand === b; });
+          if (!bModels.length) return '';
+          var bUnits = 0;
+          var rowsHtml = '';
+
+          bModels.forEach(function(m) {
+            (m.capacities || []).forEach(function(c) {
+              var capUnits = 0;
+              var colorText = (c.colors || []).map(function(col) {
+                var q = Number(col.qty || 0);
+                capUnits += q;
+                bUnits += q;
+                return escapeHtml(col.name) + ' (' + q + ')';
+              }).join(', ');
+
+              rowsHtml += '<tr style="border-bottom:1px solid #E2E8F0;">' +
+                '<td style="padding:6px 8px;font-weight:700;color:#0F172A;">' + escapeHtml(m.model) + '</td>' +
+                '<td style="padding:6px 8px;text-align:center;white-space:nowrap;">' + escapeHtml(c.capacity) + '</td>' +
+                '<td style="padding:6px 8px;color:#334155;">' + colorText + '</td>' +
+                '<td style="padding:6px 8px;text-align:right;font-weight:700;">' + capUnits + '</td>' +
+                (includePrice ? '<td style="padding:6px 8px;text-align:right;font-weight:700;color:#C8102E;white-space:nowrap;">' + (c.price > 0 ? ('฿' + Number(c.price).toLocaleString('th-TH')) : '-') + '</td>' : '') +
+              '</tr>';
+            });
+          });
+
+          return '<div style="margin-bottom:14px;page-break-inside:avoid;">' +
+            '<div style="background:#0F172A;color:#FFFFFF;padding:6px 10px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;">' +
+              '<span>' + escapeHtml(b) + '</span>' +
+              '<span>' + bModels.length + ' รุ่น • รวม ' + bUnits + ' เครื่อง</span>' +
+            '</div>' +
+            '<table style="width:100%;border-collapse:collapse;font-size:10.5px;border:1px solid #CBD5E1;">' +
+              '<thead>' +
+                '<tr style="background:#F1F5F9;color:#334155;border-bottom:1px solid #CBD5E1;">' +
+                  '<th style="padding:6px 8px;text-align:left;width:28%;">รุ่นสินค้า</th>' +
+                  '<th style="padding:6px 8px;text-align:center;width:13%;">ความจุ</th>' +
+                  '<th style="padding:6px 8px;text-align:left;">สี (จำนวน)</th>' +
+                  '<th style="padding:6px 8px;text-align:right;width:9%;">รวม</th>' +
+                  (includePrice ? '<th style="padding:6px 8px;text-align:right;width:14%;">ราคาปกติ</th>' : '') +
+                '</tr>' +
+              '</thead>' +
+              '<tbody>' + rowsHtml + '</tbody>' +
+            '</table>' +
+          '</div>';
+        }).join('');
+
+        var wrapper = document.createElement('div');
+        wrapper.style.width = '760px';
+        wrapper.style.padding = '16px';
+        wrapper.style.background = '#FFFFFF';
+        wrapper.style.fontFamily = "'Sarabun', 'Plus Jakarta Sans', sans-serif";
+        wrapper.style.color = '#0F172A';
+        wrapper.innerHTML =
+          '<div style="text-align:center;border-bottom:2px solid #C8102E;padding-bottom:10px;margin-bottom:14px;">' +
+            '<div style="display:inline-block;background:#C8102E;color:#FFFFFF;padding:4px 12px;border-radius:8px;font-weight:800;font-size:13px;letter-spacing:0.5px;margin-bottom:4px;">Jaymart STOCK ON HAND</div>' +
+            '<div style="font-size:15px;font-weight:800;color:#0F172A;">ใบสรุปสต็อกสินค้าหน้าร้าน</div>' +
+            '<div style="font-size:11px;color:#475569;margin-top:2px;">อัปเดตล่าสุด: ' + escapeHtml(STATE.lastUploadDate || '-') + ' • แบรนด์: ' + escapeHtml(selectedBrands.join(', ')) + ' • ทั้งหมด ' + filteredModels.length + ' รุ่น (' + totalUnits + ' เครื่อง)</div>' +
+          '</div>' +
+          brandSectionsHtml;
+
+        var brandTag = selectedBrands.length === STATE.brands.length ? 'ALL' : selectedBrands.slice(0, 3).join('_');
+        var fileName = 'Jaymart_Stock_' + brandTag + '.pdf';
+
+        await html2pdf().set({
+          margin: [8, 8, 8, 8],
+          filename: fileName,
+          image: { type: 'jpeg', quality: 0.96 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] }
+        }).from(wrapper).save();
+
+        closePdfExportModal();
+        showToast('ดาวน์โหลดไฟล์ ' + fileName + ' เรียบร้อยแล้ว');
+      } catch (err) {
+        showToast('สร้าง PDF ไม่สำเร็จ: ' + (err.message || err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'สร้างและดาวน์โหลด PDF';
+      }
+    }
+
     // ================= STAFF LINE AUTH & WORKSPACE =================
     function openStaffPortal() {
       document.getElementById('staffModal').classList.remove('hidden');
@@ -616,7 +818,8 @@
         mBadge.classList.remove('hidden');
         lineIcon.classList.add('hidden');
         uploadIcon.classList.remove('hidden');
-        btnText.classList.add('hidden');
+        btnText.classList.remove('hidden');
+        btnText.textContent = 'อัปโหลดสต็อก';
         tabStaff.classList.toggle('hidden', !isAdminUser());
         document.getElementById('staffWorkspaceView').classList.remove('hidden');
         renderSpecManagerList();
@@ -852,14 +1055,11 @@
       var hasKeyboard = /-\s*Keyboard\s*Cover/i.test(clean);
       clean = clean.replace(/-\s*Keyboard\s*Cover/gi, '').trim();
 
-      // Remove complete parenthetical codes except (Lamborghini)
       clean = clean.replace(/\s*\(([^)]*)\)/g, function(full, inner) {
         return /lamborghini/i.test(inner) ? (' (' + inner.trim() + ')') : ' ';
       });
-      // Fix unclosed parenthetical model code e.g. "(CPH2789 Cappuccino Brown"
       clean = clean.replace(/\((?!Lamborghini\b)[A-Z0-9-]{4,}(?=\s|$)/gi, ' ');
 
-      // Strip trailing status tags (- NEW, New, - Upgrade, Upgrade, SP, AWN)
       var prev;
       do {
         prev = clean;
@@ -884,7 +1084,6 @@
       else if (upperB === 'REALME') brand = 'realme';
       else if (upperB === 'TECNO') brand = 'Tecno';
 
-      // Keep "iPhone" in model name; strip brand prefix for all other brands
       var working = (upperB === 'IPHONE') ? ('iPhone ' + rest) : rest;
 
       var capMatch = working.match(/(\d+\s*\/\s*\d+\s*(?:GB|TB)?|\d+\s*(?:GB|TB))\b/i);
@@ -899,7 +1098,6 @@
         model = working.substring(0, idx).trim();
         color = working.substring(idx + capMatch[0].length).replace(/^[-\s]+/, '').trim();
 
-        // Move connectivity tags (LTE / Wifi / 5G) accidentally placed after capacity back to model
         var connMatch = color.match(/^(LTE|Wi-?Fi|5G)\b\s*/i);
         if (connMatch) {
           model = (model + ' ' + connMatch[1]).trim();
