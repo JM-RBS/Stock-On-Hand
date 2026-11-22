@@ -1,173 +1,1117 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Stock On Hand</title>
-
-<meta name="description" content="Stock On Hand ระบบตรวจสอบสินค้าคงเหลือ">
-<meta name="theme-color" content="#0b1220">
-<meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex, nofollow">
-
-<!-- Favicon แบบ emoji -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
-
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html, body {
-    width: 100%;
-    height: 100%;
-    height: 100dvh;              /* ป้องกันปัญหา address bar บนมือถือบัง */
-    overflow: hidden;            /* ไม่มี scrollbar */
-    background: #ffffff;
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;
-  }
-
-  /* กรอบครอบ iframe: ตัดส่วนเกิน (แถบ Google ด้านล่าง) ทิ้ง */
-  #frameWrap {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    border: 0;
-  }
-
-  /* ดัน iframe ให้สูงเกินจอขึ้นไป เพื่อซ่อนแถบ "สร้างโดยผู้ใช้ Google Apps Script" */
-  #appFrame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: calc(100% + 40px);
-    height: calc(100dvh + 40px);
-    border: 0;
-    display: block;
-    background: #ffffff;
-  }
-
-  /* ---------- Loading screen ---------- */
-  #loader {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    background: linear-gradient(160deg, #0b1220 0%, #1b2440 100%);
-    z-index: 9999;
-    opacity: 1;
-    transition: opacity .45s ease;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right)
-             env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-  #loader.hide { opacity: 0; pointer-events: none; }
-
-  .stock-icon {
-    font-size: 42px;
-    line-height: 1;
-    animation: bounce 1.2s ease-in-out infinite;
-  }
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-8px); }
-  }
-
-  .spinner {
-    width: 44px;
-    height: 44px;
-    border: 3px solid rgba(255, 255, 255, .18);
-    border-top-color: #e4002b;   /* สีแบรนด์ */
-    border-radius: 50%;
-    animation: spin .9s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .loader-title {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Sarabun",
-                 "Noto Sans Thai", Roboto, sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: .3px;
-    text-align: center;
-  }
-  .loader-sub {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Sarabun",
-                 "Noto Sans Thai", Roboto, sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, .62);
-    letter-spacing: .2px;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jaymart Stock &amp; Spec — เช็กสต็อกสินค้า</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg-page: #F8FAFC; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; min-height: 100dvh;
+      background-color: var(--bg-page); color: #0F172A;
+      font-family: 'Sarabun', 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-num { font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif; font-variant-numeric: tabular-nums; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .btn-press { transition: transform 120ms ease, background-color 150ms ease; }
+    .btn-press:active { transform: scale(0.97); }
+    .spec-card { transition: transform 180ms ease, box-shadow 180ms ease; }
+    .spec-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px -10px rgba(15, 23, 42, 0.14); }
+  </style>
 </head>
-<body>
+<body class="min-h-[100dvh] flex flex-col bg-[#F8FAFC] text-slate-900">
 
-  <!-- Loading screen -->
-  <div id="loader">
-    <div class="stock-icon">📦</div>
-    <div class="spinner"></div>
-    <div class="loader-title">Stock On Hand</div>
-    <div class="loader-sub">กำลังโหลดระบบสินค้าคงเหลือ…</div>
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2.5 sm:py-3 space-y-2.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C8102E] shadow-xs shrink-0 select-none">
+            <span class="px-2 py-0.5 rounded-full bg-white text-[#C8102E] font-extrabold text-xs tracking-tight leading-none">Jaymart</span>
+            <span class="text-white font-extrabold text-xs tracking-wide leading-none">STOCK</span>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-sm sm:text-base font-bold text-slate-900 truncate">เช็กสต็อก &amp; สเปกสินค้า</h1>
+            <span id="lastUpdateBadge" class="inline-block text-[11px] font-semibold text-slate-500 font-num">กำลังโหลดข้อมูล...</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <span id="staffActiveBadge" class="hidden inline-flex items-center h-9 px-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold truncate max-w-[140px]"></span>
+          <button id="btnStaffPortal" type="button" onclick="openStaffPortal()" title="เข้าสู่ระบบพนักงาน / อัปโหลดสต็อก" class="btn-press inline-flex items-center justify-center gap-1.5 h-9 sm:h-10 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold cursor-pointer whitespace-nowrap">
+            <svg id="staffBtnLineIcon" class="w-4 h-4 text-[#06C755] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.58 2 11c0 3.92 3.55 7.19 8.35 7.87.33.07.77.22.88.5.1.26.07.66.03.92l-.14.84c-.04.26-.2 1.01.88.55 1.08-.46 5.83-3.43 7.95-5.88C21.35 14.3 22 12.73 22 11c0-4.42-4.48-8-10-8z"/></svg>
+            <svg id="staffBtnUploadIcon" class="hidden w-5 h-5 text-[#C8102E] shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+            <span id="btnStaffPortalText">สำหรับพนักงาน</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3-Day Stale Stock Warning -->
+      <div id="staleAlertBanner" class="hidden px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.65 18.5h16.7a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"/></svg>
+        <span id="staleAlertText">สต็อกไม่ได้อัปเดตเกิน 3 วันแล้ว รบกวนพนักงานอัปโหลดไฟล์ PDF ล่าสุด</span>
+      </div>
+
+      <!-- Search & Count -->
+      <div class="flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-1 min-w-0">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="searchInput" type="text" oninput="renderCatalog()" placeholder="ค้นหารุ่นสินค้า ความจุ หรือสี..." class="w-full h-10 pl-10 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:bg-white focus:border-slate-400">
+        </div>
+        <div id="resultCount" class="h-10 px-3.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center whitespace-nowrap font-num">0 รุ่น</div>
+      </div>
+
+      <!-- Brand Filter Tabs -->
+      <div id="brandTabsContainer" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5"></div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 w-full max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div id="loadingState" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="h-96 rounded-2xl bg-slate-200 animate-pulse"></div>
+      <div class="h-96 rounded-2xl bg-slate-200 animate-pulse"></div>
+      <div class="h-96 rounded-2xl bg-slate-200 animate-pulse hidden sm:block"></div>
+      <div class="h-96 rounded-2xl bg-slate-200 animate-pulse hidden lg:block"></div>
+    </div>
+
+    <div id="catalogGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+    <div id="emptyState" class="hidden py-16 text-center bg-white rounded-3xl border border-slate-200">
+      <p class="text-base font-bold text-slate-700">ยังไม่มีรายการสินค้าในสต็อกตามเงื่อนไขที่เลือก</p>
+      <p class="text-xs text-slate-500 mt-1">พนักงานที่ล็อกอิน LINE แล้วสามารถกดไอคอนอัปโหลดด้านบนเพื่อนำเข้าไฟล์ PDF สต็อกล่าสุด</p>
+    </div>
+  </main>
+
+  <!-- Staff Auth & Workspace Modal -->
+  <div id="staffModal" class="hidden fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-4xl rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[92dvh] flex flex-col">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">พื้นที่พนักงาน (LINE Locked)</h2>
+          <span id="modalStaffBadge" class="hidden px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold"></span>
+        </div>
+        <button type="button" onclick="closeStaffModal()" class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- STEP A: LINE LOGIN GATE -->
+      <div id="staffLoginView" class="p-6 text-center space-y-4 overflow-y-auto">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-[#06C755] text-white flex items-center justify-center shadow-md">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.58 2 11c0 3.92 3.55 7.19 8.35 7.87.33.07.77.22.88.5.1.26.07.66.03.92l-.14.84c-.04.26-.2 1.01.88.55 1.08-.46 5.83-3.43 7.95-5.88C21.35 14.3 22 12.73 22 11c0-4.42-4.48-8-10-8z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">เข้าสู่ระบบพนักงานด้วย LINE</h3>
+        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">เฉพาะพนักงานที่ลงทะเบียนและผูกบัญชี LINE แล้วเท่านั้นจึงจะสามารถอัปโหลดไฟล์ PDF สต็อกและจัดการสเปกสินค้าได้</p>
+        <div id="lineAuthErrorAlert" class="hidden max-w-md mx-auto p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs"></div>
+        <button type="button" onclick="startStaffLineLogin()" class="btn-press inline-flex items-center justify-center gap-2 h-12 px-6 rounded-2xl bg-[#06C755] hover:bg-[#05b34c] text-white font-bold text-sm shadow-md cursor-pointer">
+          เชื่อมต่อบัญชี LINE
+        </button>
+        <div class="max-w-md mx-auto pt-2 text-[11px] text-slate-400 break-all">
+          Callback URL: <span id="debugCallbackUrl" class="font-mono text-slate-600 select-all"></span>
+        </div>
+      </div>
+
+      <!-- STEP B: BIND EMPLOYEE ID -->
+      <div id="staffBindView" class="hidden p-6 max-w-md mx-auto w-full space-y-4 overflow-y-auto">
+        <div class="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200">
+          <img id="bindLineAvatar" src="" alt="" referrerpolicy="no-referrer" class="w-12 h-12 rounded-full object-cover border border-white bg-white shrink-0">
+          <div class="min-w-0">
+            <p class="text-xs text-emerald-700 font-bold">ยืนยันบัญชี LINE แล้ว</p>
+            <p id="bindLineName" class="text-sm font-bold text-slate-900 truncate">-</p>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">กรอกรหัสพนักงานเพื่อล็อกตัวบัญชี LINE</label>
+          <input id="bindEmpIdInput" type="text" placeholder="เช่น ADMIN01 หรือ รหัสพนักงาน" class="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-slate-900">
+        </div>
+        <button id="btnBindEmp" type="button" onclick="submitStaffBind()" class="btn-press w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold cursor-pointer">
+          ยืนยันผูกบัญชีพนักงาน
+        </button>
+        <button type="button" onclick="logoutStaff()" class="w-full text-xs text-slate-500 underline cursor-pointer">เปลี่ยนบัญชี LINE</button>
+      </div>
+
+      <!-- STEP C: PENDING SWITCH -->
+      <div id="staffPendingView" class="hidden p-6 text-center space-y-3 overflow-y-auto">
+        <h3 class="text-base font-bold text-amber-700">รหัสพนักงานนี้ถูกใช้งานบนบัญชี LINE อื่นอยู่</h3>
+        <p class="text-xs sm:text-sm text-slate-600">ระบบส่งคำขอเปลี่ยนบัญชี LINE ไปยังผู้ดูแลระบบแล้ว กรุณาแจ้งแอดมินกดอนุมัติในแท็บจัดการพนักงาน</p>
+        <button type="button" onclick="logoutStaff()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold cursor-pointer">สลับบัญชี LINE</button>
+      </div>
+
+      <!-- STEP D: STAFF WORKSPACE -->
+      <div id="staffWorkspaceView" class="hidden flex-1 flex flex-col overflow-hidden">
+        <div class="px-5 pt-2 border-b border-slate-200 bg-slate-50 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+          <button id="wsTabPdf" type="button" onclick="switchWsTab('pdf')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-slate-900 text-slate-900 cursor-pointer whitespace-nowrap">1. อัปโหลด PDF สต็อก</button>
+          <button id="wsTabSpecs" type="button" onclick="switchWsTab('specs')" class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 cursor-pointer whitespace-nowrap">
+            2. สเปก &amp; รูปภาพ <span id="missingSpecsBadge" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px]">0</span>
+          </button>
+          <button id="wsTabStaff" type="button" onclick="switchWsTab('staff')" class="hidden px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 cursor-pointer whitespace-nowrap">3. จัดการพนักงาน</button>
+          <button type="button" onclick="logoutStaff()" class="ml-auto px-3 py-1.5 text-xs text-rose-600 font-semibold cursor-pointer whitespace-nowrap">ออกจากระบบ</button>
+        </div>
+
+        <!-- TAB 1: PDF UPLOAD -->
+        <div id="wsPanelPdf" class="flex-1 overflow-y-auto p-5 space-y-4">
+          <label for="pdfFileInput" class="block border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-6 text-center bg-slate-50 cursor-pointer transition">
+            <input id="pdfFileInput" type="file" accept="application/pdf" class="hidden" onchange="handlePdfSelected(event)">
+            <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-rose-50 text-[#C8102E] flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+            </div>
+            <p class="text-sm font-bold text-slate-800">คลิกเพื่ออัปโหลดไฟล์ PDF สต็อกสินค้า</p>
+            <p id="pdfFileNameText" class="text-xs text-slate-500 mt-1">รองรับทั้ง PSINRP11 (ไม่มีอีมี่) และ PSINRP12 (มีอีมี่) • ตัด DEMO, SIM, AIS และรายการหมดสต็อกอัตโนมัติ</p>
+          </label>
+
+          <div id="pdfPreviewBox" class="hidden space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div class="text-xs sm:text-sm text-emerald-900 font-bold" id="pdfSummaryLabel">-</div>
+              <button id="btnConfirmPdf" type="button" onclick="confirmSavePdfStock()" class="btn-press px-4 py-2 rounded-xl bg-[#C8102E] hover:bg-red-700 text-white text-xs sm:text-sm font-bold cursor-pointer">
+                ยืนยันอัปเดตสต็อกขึ้นเว็บ
+              </button>
+            </div>
+            <div class="max-h-64 overflow-auto rounded-xl border border-slate-200">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100 sticky top-0">
+                  <tr>
+                    <th class="p-2 font-bold">แบรนด์</th>
+                    <th class="p-2 font-bold">รุ่น</th>
+                    <th class="p-2 font-bold">ความจุ</th>
+                    <th class="p-2 font-bold">สี</th>
+                    <th class="p-2 font-bold text-right">จำนวน</th>
+                  </tr>
+                </thead>
+                <tbody id="pdfPreviewTbody" class="divide-y divide-slate-200 bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: SPECS & IMAGES -->
+        <div id="wsPanelSpecs" class="hidden flex-1 overflow-y-auto p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+              <input id="filterMissingSpecCheck" type="checkbox" onchange="renderSpecManagerList()" class="rounded border-slate-300">
+              <span>แสดงเฉพาะรุ่นที่ยังไม่มีสเปกหรือรูปภาพ</span>
+            </label>
+            <input id="specSearchInput" type="text" oninput="renderSpecManagerList()" placeholder="ค้นหารุ่น..." class="h-9 px-3 rounded-xl border border-slate-300 text-xs w-48">
+          </div>
+          <div id="specManagerList" class="space-y-3"></div>
+        </div>
+
+        <!-- TAB 3: STAFF MANAGEMENT (ADMIN ONLY) -->
+        <div id="wsPanelStaff" class="hidden flex-1 overflow-y-auto p-5 space-y-4">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2">
+            <input id="newStaffId" type="text" placeholder="รหัสพนักงาน" class="h-9 px-3 rounded-xl border border-slate-300 bg-white text-xs">
+            <input id="newStaffName" type="text" placeholder="ชื่อพนักงาน" class="h-9 px-3 rounded-xl border border-slate-300 bg-white text-xs">
+            <select id="newStaffRole" class="h-9 px-3 rounded-xl border border-slate-300 bg-white text-xs">
+              <option value="Staff">Staff</option>
+              <option value="Admin">Admin</option>
+            </select>
+            <button type="button" onclick="addNewStaffRow()" class="btn-press h-9 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">+ เพิ่มพนักงาน</button>
+          </div>
+          <div id="staffManagerList" class="space-y-2.5"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- App iframe -->
-  <div id="frameWrap">
-    <iframe
-      id="appFrame"
-      title="Stock On Hand"
-      allow="fullscreen; clipboard-read; clipboard-write; camera; geolocation"
-      allowfullscreen
-      referrerpolicy="no-referrer"
-      scrolling="no"
-      frameborder="0"></iframe>
+  <!-- Spec Edit Modal -->
+  <div id="editSpecModal" class="hidden fixed inset-0 z-[60] bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90dvh] flex flex-col">
+      <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="editSpecTitle" class="text-sm sm:text-base font-bold text-slate-900">แก้ไขสเปกสินค้า</h3>
+        <button type="button" onclick="closeEditSpecModal()" class="text-slate-400 hover:text-slate-700 cursor-pointer">✕</button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="font-bold block mb-1">ชิปประมวลผล</label><input id="spChip" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น Apple A20 Pro"></div>
+          <div><label class="font-bold block mb-1">หน้าจอ</label><input id="spDisplay" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder='เช่น 6.9" LTPO OLED 120Hz'></div>
+          <div class="col-span-2"><label class="font-bold block mb-1">กล้องหลัง</label><input id="spRearCam" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น 48MP + 48MP + 48MP"></div>
+          <div><label class="font-bold block mb-1">กล้องหน้า</label><input id="spFrontCam" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น 18MP"></div>
+          <div><label class="font-bold block mb-1">แบตเตอรี่ / ชาร์จ</label><input id="spBattery" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น 5567 mAh · 40W"></div>
+          <div><label class="font-bold block mb-1">กันน้ำ/ฝุ่น</label><input id="spIp" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="เช่น IP68"></div>
+          <div><label class="font-bold block mb-1">ราคาเสริม (ถ้าไม่มีใน Products)</label><input id="spCustomPrice" type="number" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="ปล่อยว่างเพื่อดึงจาก Products"></div>
+        </div>
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+          <label class="font-bold block">รูปภาพสินค้า (อัปโหลดขึ้น Drive หรือวางลิงก์)</label>
+          <div class="flex items-center gap-2">
+            <input type="file" id="spImageFileInput" accept="image/*" class="hidden" onchange="uploadSpecModalImage(event)">
+            <label for="spImageFileInput" class="inline-flex items-center h-9 px-3 rounded-lg bg-emerald-600 text-white font-bold cursor-pointer shrink-0">อัปโหลดรูป</label>
+            <input id="spImageUrl" type="url" class="w-full h-9 px-3 rounded-lg border border-slate-300" placeholder="ลิงก์รูปภาพ...">
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+        <button type="button" onclick="closeEditSpecModal()" class="h-9 px-4 rounded-xl border border-slate-300 bg-white text-xs font-semibold cursor-pointer">ยกเลิก</button>
+        <button id="btnSaveSpecModal" type="button" onclick="submitSpecModal()" class="btn-press h-9 px-4 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">บันทึกสเปก</button>
+      </div>
+    </div>
   </div>
 
-<script>
-  (function () {
-    var TARGET_URL = "https://script.google.com/macros/s/AKfycby9mto1Bx8fN289iC8fuOcUymcnKGoz2o252wJHoouEItQZ1TFIfMSkIh5orEh9GZcD/exec";
-    
-    var loader = document.getElementById('loader');
-    var wrap   = document.getElementById('frameWrap');
-    var frame  = document.getElementById('appFrame');
-    var OVERLAP = 40;
-    var done = false;
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-semibold shadow-lg"></div>
 
-    function hideLoader() {
-      if (done) return;
-      done = true;
-      loader.classList.add('hide');
-      setTimeout(function () { loader.style.display = 'none'; }, 500);
+  <script>
+    var GAS_API_URL = 'https://script.google.com/macros/s/AKfycby9mto1Bx8fN289iC8fuOcUymcnKGoz2o252wJHoouEItQZ1TFIfMSkIh5orEh9GZcD/exec';
+    var LINE_CHANNEL_ID = '2012749412';
+    var APP_URL = window.location.href.split('?')[0].split('#')[0];
+    var STORAGE_SESSION_KEY = 'jm_stock_staff_session_v2';
+    var pdfJsLoadedPromise = null;
+
+    var STATE = {
+      brands: [],
+      models: [],
+      activeBrand: 'ALL',
+      selectedCapacityIdx: {},
+      sessionToken: '',
+      lineUser: null,
+      staffStatus: 'unlogged',
+      staffInfo: null,
+      parsedPdfRows: [],
+      parsedPdfDate: '',
+      editingModel: null
+    };
+
+    var COLOR_HEX_MAP = {
+      'black': '#1E293B', 'midnight': '#0F172A', 'abyss': '#111827', 'dawn black': '#18181B',
+      'white': '#F8FAFC', 'pop white': '#F8FAFC', 'air white': '#F1F5F9', 'luna white': '#F8FAFC',
+      'silver': '#CBD5E1', 'titanium': '#94A3B8', 'gray': '#64748B', 'grey': '#64748B',
+      'blue': '#2563EB', 'mist blue': '#93C5FD', 'ice': '#E0F2FE', 'sky blue': '#38BDF8', 'glacier': '#BAE6FD',
+      'navy': '#1E3A8A', 'purple': '#9333EA', 'violet': '#7C3AED', 'lavender': '#C4B5FD', 'plum': '#6B21A8',
+      'pink': '#EC4899', 'blush': '#FBCFE8',
+      'green': '#16A34A', 'sage': '#86EFAC', 'emerald': '#059669',
+      'orange': '#EA580C', 'coral': '#FB7185', 'gold': '#D97706', 'brown': '#78350F', 'burgundy': '#7F1D1D',
+      'red': '#DC2626', 'platinum': '#E2E8F0'
+    };
+
+    function getColorSwatch(name) {
+      var lower = String(name || '').toLowerCase();
+      var keys = Object.keys(COLOR_HEX_MAP);
+      for (var i = 0; i < keys.length; i++) {
+        if (lower.indexOf(keys[i]) !== -1) return COLOR_HEX_MAP[keys[i]];
+      }
+      return '#94A3B8';
     }
 
-    // กำหนด URL ผ่าน JavaScript เพื่อป้องกันปัญหาการบล็อกในจังหวะเรนเดอร์หน้าแรก
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function formatMoney(num) {
+      var n = Number(num);
+      return (!isNaN(n) && n > 0) ? ('฿' + n.toLocaleString('th-TH')) : 'สอบถามราคาหน้าร้าน';
+    }
+
+    function showToast(msg) {
+      var el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(function() { el.classList.add('hidden'); }, 3200);
+    }
+
+    function isAdminUser() {
+      return Boolean(STATE.staffInfo && String(STATE.staffInfo.role || '').toLowerCase() === 'admin');
+    }
+
+    function saveSessionLocal() {
+      try {
+        if (STATE.sessionToken) {
+          localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify({
+            sessionToken: STATE.sessionToken,
+            lineUser: STATE.lineUser
+          }));
+        } else {
+          localStorage.removeItem(STORAGE_SESSION_KEY);
+        }
+      } catch (e) {}
+    }
+
+    function callBackend(action, payload) {
+      if (!GAS_API_URL) {
+        return Promise.reject(new Error('กรุณาระบุ GAS_API_URL'));
+      }
+      return fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: action, payload: payload || {} })
+      }).then(function(res) {
+        if (!res.ok) throw new Error('HTTP Error ' + res.status);
+        return res.json();
+      });
+    }
+
+    function ensurePdfJsLoaded() {
+      if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+      if (pdfJsLoadedPromise) return pdfJsLoadedPromise;
+      pdfJsLoadedPromise = new Promise(function(resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload = function() {
+          if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            resolve(pdfjsLib);
+          } else {
+            reject(new Error('โหลด pdf.js ไม่สำเร็จ'));
+          }
+        };
+        s.onerror = function() { reject(new Error('โหลดไลบรารีอ่าน PDF ไม่สำเร็จ')); };
+        document.head.appendChild(s);
+      });
+      return pdfJsLoadedPromise;
+    }
+
     window.addEventListener('DOMContentLoaded', function() {
-      frame.src = TARGET_URL;
+      var cbEl = document.getElementById('debugCallbackUrl');
+      if (cbEl) cbEl.textContent = APP_URL;
+
+      loadCatalog();
+
+      var urlParams = new URLSearchParams(window.location.search);
+      var oauthCode = urlParams.get('code');
+      if (oauthCode) {
+        try { window.history.replaceState({}, document.title, APP_URL); } catch (e) {}
+        showToast('กำลังยืนยันตัวตนกับ LINE...');
+        callBackend('exchangeLineCode', { code: oauthCode, redirectUri: APP_URL }).then(function(authRes) {
+          if (authRes && authRes.ok && authRes.sessionToken && authRes.lineUser) {
+            STATE.sessionToken = authRes.sessionToken;
+            STATE.lineUser = authRes.lineUser;
+            saveSessionLocal();
+            if (authRes.access) {
+              STATE.staffStatus = authRes.access.status;
+              STATE.staffInfo = authRes.access.staff || null;
+            }
+            updateStaffUI();
+            openStaffPortal();
+          } else {
+            var errAlert = document.getElementById('lineAuthErrorAlert');
+            if (errAlert) {
+              errAlert.textContent = 'ยืนยันตัวตน LINE ไม่สำเร็จ: ' + ((authRes && authRes.error) || 'กรุณาลองใหม่');
+              errAlert.classList.remove('hidden');
+            }
+            openStaffPortal();
+          }
+        }).catch(function(err) {
+          showToast('เชื่อมต่อ LINE ผิดพลาด: ' + (err.message || err));
+        });
+        return;
+      }
+
+      try {
+        var saved = JSON.parse(localStorage.getItem(STORAGE_SESSION_KEY) || 'null');
+        if (saved && saved.sessionToken) {
+          STATE.sessionToken = saved.sessionToken;
+          STATE.lineUser = saved.lineUser || null;
+          callBackend('checkSession', { sessionToken: saved.sessionToken }).then(function(res) {
+            if (res && res.ok && res.status !== 'unlogged') {
+              STATE.lineUser = res.lineUser || STATE.lineUser;
+              STATE.staffStatus = res.status;
+              STATE.staffInfo = res.staff || null;
+              saveSessionLocal();
+              updateStaffUI();
+            } else {
+              STATE.sessionToken = '';
+              STATE.lineUser = null;
+              STATE.staffStatus = 'unlogged';
+              STATE.staffInfo = null;
+              saveSessionLocal();
+              updateStaffUI();
+            }
+          }).catch(function() {});
+        }
+      } catch (e) {}
     });
 
-    frame.addEventListener('load', function () {
-      setTimeout(hideLoader, 400);
-    });
-
-    // ซ่อน loader อัตโนมัติใน 15 วินาที (กรณีโหลดช้าหรือติดขัด)
-    setTimeout(hideLoader, 15000);
-
-    // ปรับความสูงอัตโนมัติป้องกันจอล้นบนมือถือ
-    function fixHeight() {
-      var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-      wrap.style.height  = h + 'px';
-      frame.style.height = (h + OVERLAP) + 'px';
+    function loadCatalog() {
+      callBackend('getPublicCatalog', {}).then(function(res) {
+        document.getElementById('loadingState').classList.add('hidden');
+        if (!res || !res.ok) {
+          document.getElementById('lastUpdateBadge').textContent = 'โหลดข้อมูลไม่สำเร็จ';
+          showToast('โหลดข้อมูลสต็อกไม่สำเร็จ');
+          return;
+        }
+        applyCatalogData(res);
+      }).catch(function(err) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('lastUpdateBadge').textContent = 'ยังไม่ได้เชื่อม API';
+        showToast(err.message || String(err));
+      });
     }
-    window.addEventListener('resize', fixHeight);
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', fixHeight);
-    window.addEventListener('orientationchange', function () { setTimeout(fixHeight, 300); });
-    fixHeight();
 
-    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
-  })();
-</script>
+    function applyCatalogData(res) {
+      STATE.brands = res.brands || [];
+      STATE.models = res.models || [];
+
+      var badge = document.getElementById('lastUpdateBadge');
+      badge.textContent = res.lastUploadDate ? ('อัปเดต: ' + res.lastUploadDate) : 'ยังไม่มีข้อมูลสต็อก';
+
+      var staleBanner = document.getElementById('staleAlertBanner');
+      if (res.isStale) {
+        document.getElementById('staleAlertText').textContent = 'สต็อกไม่ได้อัปเดตมาแล้ว ' + res.daysSinceUpdate + ' วัน (เกิน 3 วัน) รบกวนพนักงานอัปโหลดไฟล์ PDF ล่าสุด';
+        staleBanner.classList.remove('hidden');
+      } else {
+        staleBanner.classList.add('hidden');
+      }
+
+      renderBrandTabs();
+      renderCatalog();
+      updateMissingSpecsBadge();
+    }
+
+    function renderBrandTabs() {
+      var container = document.getElementById('brandTabsContainer');
+      if (!container) return;
+      var all = ['ALL'].concat(STATE.brands);
+      container.innerHTML = all.map(function(b) {
+        var active = STATE.activeBrand === b;
+        var cnt = b === 'ALL' ? STATE.models.length : STATE.models.filter(function(m) { return m.brand === b; }).length;
+        return '<button type="button" onclick="selectBrand(\'' + escapeHtml(b) + '\')" class="btn-press inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl border text-xs sm:text-sm font-bold whitespace-nowrap cursor-pointer ' +
+          (active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50') + '">' +
+          '<span>' + escapeHtml(b === 'ALL' ? 'ทั้งหมด' : b) + '</span>' +
+          '<span class="px-1.5 py-0.5 rounded-md text-[11px] font-num ' + (active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500') + '">' + cnt + '</span>' +
+        '</button>';
+      }).join('');
+    }
+
+    function selectBrand(b) {
+      STATE.activeBrand = b;
+      renderBrandTabs();
+      renderCatalog();
+    }
+
+    function selectModelCapacity(modelKey, idx) {
+      STATE.selectedCapacityIdx[modelKey] = idx;
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      var grid = document.getElementById('catalogGrid');
+      var empty = document.getElementById('emptyState');
+      var q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+
+      var filtered = STATE.models.filter(function(m) {
+        if (STATE.activeBrand !== 'ALL' && m.brand !== STATE.activeBrand) return false;
+        if (q) {
+          var capStr = (m.capacities || []).map(function(c) {
+            return c.capacity + ' ' + (c.colors || []).map(function(col) { return typeof col === 'string' ? col : col.name; }).join(' ');
+          }).join(' ');
+          var hay = (m.brand + ' ' + m.model + ' ' + capStr).toLowerCase();
+          if (hay.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('resultCount').textContent = filtered.length + ' รุ่น';
+      if (!filtered.length) {
+        grid.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.classList.remove('hidden');
+
+      grid.innerHTML = filtered.map(function(item) {
+        var mKey = item.brand + '||' + item.model;
+        var caps = item.capacities || [];
+        var capIdx = STATE.selectedCapacityIdx[mKey] || 0;
+        if (capIdx >= caps.length) capIdx = 0;
+        var activeCap = caps[capIdx] || { capacity: 'มาตรฐาน', price: 0, colors: [] };
+
+        var capButtons = caps.map(function(c, idx) {
+          var isSel = idx === capIdx;
+          return '<button type="button" onclick="selectModelCapacity(\'' + escapeHtml(mKey) + '\', ' + idx + ')" class="btn-press px-2.5 py-1 rounded-lg text-[11px] font-bold font-num border cursor-pointer ' +
+            (isSel ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50') + '">' +
+            escapeHtml(c.capacity) +
+          '</button>';
+        }).join('');
+
+        var colorChips = (activeCap.colors || []).map(function(col) {
+          var cName = typeof col === 'string' ? col : col.name;
+          var cQty = typeof col === 'string' ? 0 : Number(col.qty || 0);
+          var qtyHtml = cQty > 0
+            ? '<span class="px-1.5 py-0.2 rounded-full bg-white text-slate-800 border border-slate-200 text-[10px] font-extrabold font-num">' + cQty + '</span>'
+            : '';
+          return '<span class="inline-flex items-center gap-1.5 pl-2 pr-1.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700">' +
+            '<span class="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0" style="background:' + getColorSwatch(cName) + '"></span>' +
+            '<span>' + escapeHtml(cName) + '</span>' +
+            qtyHtml +
+          '</span>';
+        }).join('');
+
+        var sp = item.specs || {};
+        var specRows = [
+          { icon: '⚙️', val: sp.chip },
+          { icon: '📱', val: sp.display },
+          { icon: '📷', val: sp.rearCam },
+          { icon: '🤳', val: sp.frontCam },
+          { icon: '🔋', val: sp.battery },
+          { icon: '💾', val: caps.map(function(c) { return c.capacity; }).join(', ') },
+          { icon: '🛡️', val: sp.ipRating }
+        ].filter(function(r) { return r.val; });
+
+        var specHtml = specRows.length
+          ? '<ul class="space-y-1 text-xs text-slate-600">' + specRows.map(function(r) {
+              return '<li class="flex items-start gap-2"><span class="shrink-0">' + r.icon + '</span><span class="leading-snug">' + escapeHtml(r.val) + '</span></li>';
+            }).join('') + '</ul>'
+          : '<p class="text-xs text-slate-400 italic">ยังไม่มีข้อมูลสเปก</p>';
+
+        var imgHtml = item.imageUrl
+          ? '<img src="' + escapeHtml(item.imageUrl) + '" alt="' + escapeHtml(item.model) + '" loading="lazy" referrerpolicy="no-referrer" class="w-full h-full object-contain p-4">'
+          : '<div class="w-full h-full flex flex-col items-center justify-center text-slate-300"><svg class="w-12 h-12 mb-1" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg><span class="text-[11px] text-slate-400">ไม่มีรูปสินค้า</span></div>';
+
+        return '<article class="spec-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">' +
+          '<div class="relative h-48 bg-[#FAF9F5] border-b border-slate-100">' +
+            '<span class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-white text-[11px] font-extrabold shadow-xs" style="background:' + escapeHtml(item.accentColor || '#C8102E') + '">' + escapeHtml(item.brand) + '</span>' +
+            imgHtml +
+          '</div>' +
+          '<div class="p-4 flex-1 flex flex-col justify-between space-y-3">' +
+            '<div class="space-y-2.5">' +
+              '<h3 class="text-base font-extrabold text-slate-900 leading-snug">' + escapeHtml(item.model) + '</h3>' +
+              specHtml +
+            '</div>' +
+            '<div class="pt-2.5 border-t border-slate-100 space-y-2">' +
+              '<div class="flex flex-wrap items-center gap-1.5">' + capButtons + '</div>' +
+              '<div class="flex flex-wrap gap-1.5">' + colorChips + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="px-4 py-2.5 bg-[#FEFCE8] border-t border-amber-100 flex items-center justify-between">' +
+            '<span class="text-xs font-bold text-slate-600">ราคาปกติ</span>' +
+            '<span class="text-lg font-black text-[#C8102E] font-num">' + formatMoney(activeCap.price) + '</span>' +
+          '</div>' +
+        '</article>';
+      }).join('');
+    }
+
+    // ================= STAFF LINE AUTH & WORKSPACE =================
+    function openStaffPortal() {
+      document.getElementById('staffModal').classList.remove('hidden');
+      ensurePdfJsLoaded().catch(function() {});
+      updateStaffUI();
+    }
+
+    function closeStaffModal() {
+      document.getElementById('staffModal').classList.add('hidden');
+    }
+
+    function updateStaffUI() {
+      var badge = document.getElementById('staffActiveBadge');
+      var mBadge = document.getElementById('modalStaffBadge');
+      var btnText = document.getElementById('btnStaffPortalText');
+      var lineIcon = document.getElementById('staffBtnLineIcon');
+      var uploadIcon = document.getElementById('staffBtnUploadIcon');
+      var tabStaff = document.getElementById('wsTabStaff');
+
+      ['staffLoginView', 'staffBindView', 'staffPendingView', 'staffWorkspaceView'].forEach(function(id) {
+        document.getElementById(id).classList.add('hidden');
+      });
+
+      if (STATE.staffStatus === 'Active' && STATE.staffInfo) {
+        badge.textContent = STATE.staffInfo.name;
+        badge.classList.remove('hidden');
+        mBadge.textContent = STATE.staffInfo.name + ' (' + STATE.staffInfo.employeeId + ' • ' + STATE.staffInfo.role + ')';
+        mBadge.classList.remove('hidden');
+        lineIcon.classList.add('hidden');
+        uploadIcon.classList.remove('hidden');
+        btnText.classList.add('hidden');
+        tabStaff.classList.toggle('hidden', !isAdminUser());
+        document.getElementById('staffWorkspaceView').classList.remove('hidden');
+        renderSpecManagerList();
+        return;
+      }
+
+      badge.classList.add('hidden');
+      mBadge.classList.add('hidden');
+      lineIcon.classList.remove('hidden');
+      uploadIcon.classList.add('hidden');
+      btnText.classList.remove('hidden');
+      btnText.textContent = 'สำหรับพนักงาน';
+      tabStaff.classList.add('hidden');
+
+      if (!STATE.sessionToken || !STATE.lineUser) {
+        document.getElementById('staffLoginView').classList.remove('hidden');
+      } else if (STATE.staffStatus === 'Pending Switch') {
+        document.getElementById('staffPendingView').classList.remove('hidden');
+      } else {
+        document.getElementById('bindLineAvatar').src = STATE.lineUser.pictureUrl || '';
+        document.getElementById('bindLineName').textContent = STATE.lineUser.displayName || '';
+        document.getElementById('staffBindView').classList.remove('hidden');
+      }
+    }
+
+    function startStaffLineLogin() {
+      if (!LINE_CHANNEL_ID) {
+        showToast('ไม่พบ LINE Channel ID');
+        return;
+      }
+      var state = 'st_' + Math.random().toString(36).substring(2, 10);
+      var url = 'https://access.line.me/oauth2/v2.1/authorize' +
+        '?response_type=code' +
+        '&client_id=' + encodeURIComponent(LINE_CHANNEL_ID) +
+        '&redirect_uri=' + encodeURIComponent(APP_URL) +
+        '&state=' + encodeURIComponent(state) +
+        '&scope=' + encodeURIComponent('profile openid');
+      window.location.href = url;
+    }
+
+    function submitStaffBind() {
+      var empId = (document.getElementById('bindEmpIdInput').value || '').trim();
+      if (!empId) { showToast('กรุณากรอกรหัสพนักงาน'); return; }
+      var btn = document.getElementById('btnBindEmp');
+      btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
+
+      callBackend('registerStaffLine', {
+        sessionToken: STATE.sessionToken,
+        employeeId: empId
+      }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'ยืนยันผูกบัญชีพนักงาน';
+        if (!res || !res.ok) { showToast((res && res.error) || 'ลงทะเบียนไม่สำเร็จ'); return; }
+        STATE.staffStatus = res.status;
+        STATE.staffInfo = res.staff || null;
+        updateStaffUI();
+        showToast(res.status === 'Active' ? 'ยืนยันและล็อกบัญชีพนักงานสำเร็จ' : 'ส่งคำขอเปลี่ยนเครื่องแล้ว');
+      }).catch(function(err) {
+        btn.disabled = false; btn.textContent = 'ยืนยันผูกบัญชีพนักงาน';
+        showToast('ผิดพลาด: ' + (err.message || err));
+      });
+    }
+
+    function logoutStaff() {
+      var token = STATE.sessionToken;
+      STATE.sessionToken = '';
+      STATE.lineUser = null;
+      STATE.staffStatus = 'unlogged';
+      STATE.staffInfo = null;
+      saveSessionLocal();
+      updateStaffUI();
+      if (token) {
+        callBackend('logoutSession', { sessionToken: token }).catch(function() {});
+      }
+    }
+
+    function switchWsTab(tab) {
+      if (tab === 'staff' && !isAdminUser()) {
+        showToast('สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น');
+        return;
+      }
+      var map = {
+        pdf:   { btn: 'wsTabPdf',   panel: 'wsPanelPdf' },
+        specs: { btn: 'wsTabSpecs', panel: 'wsPanelSpecs' },
+        staff: { btn: 'wsTabStaff', panel: 'wsPanelStaff' }
+      };
+      Object.keys(map).forEach(function(k) {
+        var sel = k === tab;
+        var btnEl = document.getElementById(map[k].btn);
+        var isHiddenTab = (k === 'staff' && !isAdminUser());
+        btnEl.className = (isHiddenTab ? 'hidden ' : '') + (sel
+          ? 'px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-slate-900 text-slate-900 cursor-pointer whitespace-nowrap'
+          : 'px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 cursor-pointer whitespace-nowrap');
+        document.getElementById(map[k].panel).classList.toggle('hidden', !sel);
+      });
+      if (tab === 'specs') renderSpecManagerList();
+      if (tab === 'staff') loadStaffManager();
+    }
+
+    // ================= PDF.JS STOCK PARSER (PSINRP11 & PSINRP12) =================
+    async function handlePdfSelected(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      document.getElementById('pdfFileNameText').textContent = 'กำลังอ่านไฟล์: ' + file.name + '...';
+
+      try {
+        await ensurePdfJsLoaded();
+        var arrayBuffer = await file.arrayBuffer();
+        var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        var rawItems = [];
+        var printedDate = '';
+        var detectedProgram = '';
+
+        for (var p = 1; p <= pdf.numPages; p++) {
+          var page = await pdf.getPage(p);
+          var content = await page.getTextContent();
+          var rowsMap = {};
+
+          content.items.forEach(function(it) {
+            var str = String(it.str || '').trim();
+            if (!str) return;
+            var x = it.transform[4];
+            var y = Math.round(it.transform[5] / 3) * 3;
+            if (!rowsMap[y]) rowsMap[y] = [];
+            rowsMap[y].push({ x: x, text: str });
+          });
+
+          var ys = Object.keys(rowsMap).map(Number).sort(function(a, b) { return b - a; });
+          var descStartX = 68;
+          var uomStartX = 330;
+          var uomEndX = 410;
+          var qtyStartX = 720;
+          var qtyEndX = 9999;
+          var curItem = null;
+
+          ys.forEach(function(y) {
+            var line = rowsMap[y].sort(function(a, b) { return a.x - b.x; });
+            var fullLine = line.map(function(w) { return w.text; }).join(' ');
+
+            if (!detectedProgram) {
+              var pm = fullLine.match(/Program\s*ID\s*:\s*([A-Z0-9]+)/i);
+              if (pm) detectedProgram = pm[1].toUpperCase();
+            }
+            if (!printedDate) {
+              var dm = fullLine.match(/Printed\s*Date\s*:\s*(\d{2}\/\d{2}\/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/i);
+              if (dm) printedDate = dm[1];
+            }
+
+            if (fullLine.indexOf('Description') !== -1 && fullLine.indexOf('UOM') !== -1) {
+              var headerDescX = null;
+              var headerUomX = null;
+              var headerSubinvX = null;
+              var headerQtyX = null;
+
+              line.forEach(function(w) {
+                var t = w.text.trim();
+                if (t === 'Description') headerDescX = w.x;
+                else if (t === 'UOM') headerUomX = w.x;
+                else if (/^Subinventory/i.test(t)) headerSubinvX = w.x;
+                else if (/^(On\s*Hand|On|Onhand|Qty)/i.test(t)) {
+                  if (headerQtyX === null || w.x > headerQtyX) headerQtyX = w.x;
+                }
+              });
+
+              if (headerDescX !== null) {
+                descStartX = Math.max(60, Math.min(headerDescX - 10, 95));
+              }
+              if (headerUomX !== null) {
+                uomStartX = headerUomX - 18;
+                uomEndX = headerSubinvX !== null ? (headerSubinvX - 10) : (headerUomX + 55);
+              }
+              if (headerQtyX !== null) {
+                qtyStartX = headerQtyX - 40;
+                qtyEndX = headerSubinvX !== null && headerQtyX < headerSubinvX ? (headerSubinvX - 10) : 9999;
+              } else if (detectedProgram === 'PSINRP12' && headerUomX !== null) {
+                qtyStartX = headerUomX + 48;
+                qtyEndX = headerUomX + 140;
+              }
+              return;
+            }
+
+            if (/^(Program ID|User ID|From |Condition|Page\s*:|Item Code|Onhand|Qty|Total |Grand Total|บริษัท|Stock on Hand)/i.test(fullLine)) return;
+
+            var itemCol = line.filter(function(w) { return w.x < descStartX; }).map(function(w) { return w.text; }).join('').trim();
+            var descCol = line.filter(function(w) { return w.x >= descStartX && w.x < uomStartX; }).map(function(w) { return w.text; }).join(' ').trim();
+            var uomCol  = line.filter(function(w) { return w.x >= uomStartX && w.x < uomEndX; }).map(function(w) { return w.text; }).join(' ').trim();
+            var qtyCol  = line.filter(function(w) { return w.x >= qtyStartX && w.x < qtyEndX; }).map(function(w) { return w.text; }).join(' ').trim();
+
+            if (/^\d{10,}/.test(itemCol)) {
+              if (curItem) rawItems.push(curItem);
+              var qtyTokens = qtyCol.match(/\d+/g);
+              var parsedQty = qtyTokens ? parseInt(qtyTokens[qtyTokens.length - 1], 10) : 0;
+              curItem = {
+                desc: descCol,
+                uom: uomCol,
+                qty: parsedQty
+              };
+            } else if (curItem && descCol && !/^\d+$/.test(descCol) && !/^\d+\s*\/\s*\d+$/.test(descCol)) {
+              curItem.desc = (curItem.desc + ' ' + descCol).trim();
+            }
+          });
+          if (curItem) rawItems.push(curItem);
+        }
+
+        var parsed = [];
+        rawItems.forEach(function(it) {
+          var d = it.desc.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+          if (!d || it.qty <= 0 || it.uom === 'ใบ') return;
+          if (/\bDEMO\b/i.test(d) || /\bSIM\b/i.test(d) || /\bAIS\b/i.test(d)) return;
+
+          var info = parseModelDesc(d);
+          if (info) {
+            info.qty = it.qty;
+            info.rawDesc = d;
+            parsed.push(info);
+          }
+        });
+
+        STATE.parsedPdfRows = parsed;
+        STATE.parsedPdfDate = printedDate;
+        document.getElementById('pdfFileNameText').textContent = 'ไฟล์: ' + file.name + (detectedProgram ? (' (' + detectedProgram + ')') : '');
+        document.getElementById('pdfSummaryLabel').textContent = 'พร้อมอัปเดต ' + parsed.length + ' รายการ (ตัด DEMO / SIM / AIS และรายการหมดสต็อกแล้ว)';
+        document.getElementById('pdfPreviewTbody').innerHTML = parsed.slice(0, 150).map(function(r) {
+          return '<tr><td class="p-2 font-bold">' + escapeHtml(r.brand) + '</td><td class="p-2">' + escapeHtml(r.model) + '</td><td class="p-2 font-num">' + escapeHtml(r.capacity) + '</td><td class="p-2">' + escapeHtml(r.color) + '</td><td class="p-2 text-right font-num">' + r.qty + '</td></tr>';
+        }).join('');
+        document.getElementById('pdfPreviewBox').classList.remove('hidden');
+      } catch (err) {
+        showToast('อ่านไฟล์ PDF ไม่สำเร็จ: ' + (err.message || err));
+      }
+    }
+
+    function parseModelDesc(desc) {
+      var clean = String(desc || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+      var hasKeyboard = /-\s*Keyboard\s*Cover/i.test(clean);
+      clean = clean.replace(/-\s*Keyboard\s*Cover/gi, '').trim();
+
+      // Remove complete parenthetical codes except (Lamborghini)
+      clean = clean.replace(/\s*\(([^)]*)\)/g, function(full, inner) {
+        return /lamborghini/i.test(inner) ? (' (' + inner.trim() + ')') : ' ';
+      });
+      // Fix unclosed parenthetical model code e.g. "(CPH2789 Cappuccino Brown"
+      clean = clean.replace(/\((?!Lamborghini\b)[A-Z0-9-]{4,}(?=\s|$)/gi, ' ');
+
+      // Strip trailing status tags (- NEW, New, - Upgrade, Upgrade, SP, AWN)
+      var prev;
+      do {
+        prev = clean;
+        clean = clean.replace(/(?:\s*-\s*|\s+)(NEW|Upgrade|SP|AWN)\b\s*$/i, '').trim();
+      } while (clean !== prev);
+      clean = clean.replace(/\s+/g, ' ').trim();
+
+      var brandMatch = clean.match(/^(\S+)\s+(.+)$/);
+      if (!brandMatch) return null;
+      var rawBrand = brandMatch[1];
+      var rest = brandMatch[2].trim();
+
+      var brand = rawBrand;
+      var upperB = rawBrand.toUpperCase();
+      if (upperB === 'SAM' || upperB === 'SAMSUNG') brand = 'Samsung';
+      else if (upperB === 'IPHONE' || upperB === 'APPLE') brand = 'Apple';
+      else if (upperB === 'OPPO') brand = 'Oppo';
+      else if (upperB === 'VIVO') brand = 'Vivo';
+      else if (upperB === 'XIAOMI' || upperB === 'REDMI' || upperB === 'POCO') brand = 'Xiaomi';
+      else if (upperB === 'HONOR') brand = 'Honor';
+      else if (upperB === 'INFINIX') brand = 'Infinix';
+      else if (upperB === 'REALME') brand = 'realme';
+      else if (upperB === 'TECNO') brand = 'Tecno';
+
+      // Keep "iPhone" in model name; strip brand prefix for all other brands
+      var working = (upperB === 'IPHONE') ? ('iPhone ' + rest) : rest;
+
+      var capMatch = working.match(/(\d+\s*\/\s*\d+\s*(?:GB|TB)?|\d+\s*(?:GB|TB))\b/i);
+      var model = working;
+      var capacity = 'มาตรฐาน';
+      var color = 'สีมาตรฐาน';
+
+      if (capMatch) {
+        capacity = capMatch[1].replace(/\s+/g, '').toUpperCase();
+        if (/^\d+\/\d+$/.test(capacity)) capacity += 'GB';
+        var idx = capMatch.index;
+        model = working.substring(0, idx).trim();
+        color = working.substring(idx + capMatch[0].length).replace(/^[-\s]+/, '').trim();
+
+        // Move connectivity tags (LTE / Wifi / 5G) accidentally placed after capacity back to model
+        var connMatch = color.match(/^(LTE|Wi-?Fi|5G)\b\s*/i);
+        if (connMatch) {
+          model = (model + ' ' + connMatch[1]).trim();
+          color = color.substring(connMatch[0].length).replace(/^[-\s]+/, '').trim();
+        }
+        if (!color) color = 'สีมาตรฐาน';
+      }
+
+      if (hasKeyboard) model += ' - Keyboard Cover';
+
+      return { brand: brand, model: model, capacity: capacity, color: color };
+    }
+
+    function confirmSavePdfStock() {
+      if (!STATE.parsedPdfRows.length || !STATE.sessionToken) return;
+      var btn = document.getElementById('btnConfirmPdf');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      callBackend('saveStockFromPdf', {
+        sessionToken: STATE.sessionToken,
+        stockRows: STATE.parsedPdfRows,
+        printedDate: STATE.parsedPdfDate
+      })
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = 'ยืนยันอัปเดตสต็อกขึ้นเว็บ';
+          if (!res || !res.ok) { showToast((res && res.error) || 'บันทึกไม่สำเร็จ'); return; }
+          if (res.catalog) applyCatalogData(res.catalog);
+          showToast('อัปเดตสต็อก ' + res.count + ' รายการเรียบร้อย!' + (res.newModelsCount ? (' (พบรุ่นใหม่ ' + res.newModelsCount + ' รุ่น)') : ''));
+        })
+        .catch(function(err) {
+          btn.disabled = false; btn.textContent = 'ยืนยันอัปเดตสต็อกขึ้นเว็บ';
+          showToast('ผิดพลาด: ' + (err.message || err));
+        });
+    }
+
+    // ================= SPEC & IMAGE MANAGER =================
+    function updateMissingSpecsBadge() {
+      var missing = STATE.models.filter(function(m) {
+        return !m.imageUrl || !(m.specs && (m.specs.chip || m.specs.display));
+      }).length;
+      var b = document.getElementById('missingSpecsBadge');
+      if (!b) return;
+      b.textContent = missing;
+      b.classList.toggle('hidden', missing === 0);
+    }
+
+    function renderSpecManagerList() {
+      var listEl = document.getElementById('specManagerList');
+      if (!listEl) return;
+      var onlyMissing = document.getElementById('filterMissingSpecCheck').checked;
+      var q = (document.getElementById('specSearchInput').value || '').trim().toLowerCase();
+
+      var items = STATE.models.filter(function(m) {
+        var isMissing = !m.imageUrl || !(m.specs && (m.specs.chip || m.specs.display));
+        if (onlyMissing && !isMissing) return false;
+        if (q && (m.brand + ' ' + m.model).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+
+      listEl.innerHTML = items.map(function(m) {
+        var hasSpec = Boolean(m.specs && (m.specs.chip || m.specs.display));
+        return '<div class="p-3 rounded-2xl border border-slate-200 bg-white flex items-center justify-between gap-3">' +
+          '<div class="flex items-center gap-3 min-w-0">' +
+            (m.imageUrl ? '<img src="' + escapeHtml(m.imageUrl) + '" alt="" referrerpolicy="no-referrer" class="w-11 h-11 rounded-xl object-contain border border-slate-200 p-1 shrink-0">' : '<div class="w-11 h-11 rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400 shrink-0">ไม่มีรูป</div>') +
+            '<div class="min-w-0">' +
+              '<p class="text-xs font-extrabold text-slate-900 truncate">' + escapeHtml(m.brand + ' — ' + m.model) + '</p>' +
+              '<p class="text-[11px] ' + (hasSpec ? 'text-emerald-600' : 'text-amber-600 font-semibold') + '">' + (hasSpec ? '✓ มีสเปกแล้ว' : '⚠ ยังไม่มีสเปก') + '</p>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" onclick="openEditSpecModal(\'' + escapeHtml(m.brand) + '\', \'' + escapeHtml(m.model) + '\')" class="btn-press h-8 px-3 rounded-xl bg-slate-900 text-white text-xs font-bold shrink-0 cursor-pointer">แก้ไข / ใส่รูป</button>' +
+        '</div>';
+      }).join('') || '<p class="text-center text-xs text-slate-500 py-8">ไม่พบรายการรุ่นสินค้า</p>';
+    }
+
+    function openEditSpecModal(brand, model) {
+      var found = STATE.models.find(function(m) { return m.brand === brand && m.model === model; });
+      STATE.editingModel = found || { brand: brand, model: model, specs: {} };
+      var sp = STATE.editingModel.specs || {};
+      document.getElementById('editSpecTitle').textContent = brand + ' — ' + model;
+      document.getElementById('spChip').value = sp.chip || '';
+      document.getElementById('spDisplay').value = sp.display || '';
+      document.getElementById('spRearCam').value = sp.rearCam || '';
+      document.getElementById('spFrontCam').value = sp.frontCam || '';
+      document.getElementById('spBattery').value = sp.battery || '';
+      document.getElementById('spIp').value = sp.ipRating || '';
+      document.getElementById('spCustomPrice').value = STATE.editingModel.customPrice || '';
+      document.getElementById('spImageUrl').value = STATE.editingModel.imageUrl || '';
+      document.getElementById('editSpecModal').classList.remove('hidden');
+    }
+
+    function closeEditSpecModal() {
+      document.getElementById('editSpecModal').classList.add('hidden');
+    }
+
+    function uploadSpecModalImage(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file || !STATE.editingModel) return;
+      showToast('กำลังอัปโหลดรูปขึ้น Google Drive...');
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        callBackend('uploadModelImageToDrive', {
+          sessionToken: STATE.sessionToken,
+          brand: STATE.editingModel.brand,
+          model: STATE.editingModel.model,
+          fileName: file.name,
+          base64DataUrl: evt.target.result
+        })
+          .then(function(res) {
+            if (!res || !res.ok) { showToast((res && res.error) || 'อัปโหลดไม่สำเร็จ'); return; }
+            document.getElementById('spImageUrl').value = res.imageUrl;
+            if (res.catalog) applyCatalogData(res.catalog);
+            renderSpecManagerList();
+            showToast('อัปโหลดรูปสำเร็จ');
+          });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function submitSpecModal() {
+      if (!STATE.editingModel) return;
+      var btn = document.getElementById('btnSaveSpecModal');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      callBackend('saveModelSpecAndPrice', {
+        sessionToken: STATE.sessionToken,
+        data: {
+          brand: STATE.editingModel.brand,
+          model: STATE.editingModel.model,
+          chip: document.getElementById('spChip').value,
+          display: document.getElementById('spDisplay').value,
+          rearCam: document.getElementById('spRearCam').value,
+          frontCam: document.getElementById('spFrontCam').value,
+          battery: document.getElementById('spBattery').value,
+          ipRating: document.getElementById('spIp').value,
+          customPrice: document.getElementById('spCustomPrice').value,
+          imageUrl: document.getElementById('spImageUrl').value
+        }
+      }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'บันทึกสเปก';
+        if (!res || !res.ok) { showToast((res && res.error) || 'บันทึกไม่สำเร็จ'); return; }
+        if (res.catalog) applyCatalogData(res.catalog);
+        renderSpecManagerList();
+        closeEditSpecModal();
+        showToast('บันทึกสเปกเรียบร้อยแล้ว');
+      });
+    }
+
+    // ================= STAFF MANAGER (ADMIN ONLY) =================
+    function loadStaffManager() {
+      if (!isAdminUser()) return;
+      callBackend('getStaffManagementList', { sessionToken: STATE.sessionToken }).then(function(res) {
+        if (!res || !res.ok) {
+          if (res && res.error) showToast(res.error);
+          return;
+        }
+        renderStaffManager(res.staffList || []);
+      });
+    }
+
+    function renderStaffManager(list) {
+      document.getElementById('staffManagerList').innerHTML = list.map(function(s) {
+        var isSwitch = s.status === 'Pending Switch';
+        return '<div class="p-3 rounded-2xl border ' + (isSwitch ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200 bg-white') + ' flex items-center justify-between gap-2 text-xs">' +
+          '<div>' +
+            '<p class="font-bold text-slate-900">' + escapeHtml(s.name) + ' <span class="text-slate-500">(' + escapeHtml(s.employeeId) + ' • ' + escapeHtml(s.role) + ')</span></p>' +
+            '<p class="text-[11px] text-slate-500">' + (s.lineUserId ? ('ผูก LINE: ' + escapeHtml(s.lineName || s.lineUserId.slice(0, 10))) : 'ยังไม่ผูก LINE') + ' • สถานะ: <strong>' + escapeHtml(s.status) + '</strong></p>' +
+          '</div>' +
+          '<div class="flex gap-1.5">' +
+            (isSwitch ? '<button type="button" onclick="staffAction(\'approveSwitch\', \'' + escapeHtml(s.employeeId) + '\')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold cursor-pointer">อนุมัติเปลี่ยนเครื่อง</button>' : '') +
+            (s.lineUserId ? '<button type="button" onclick="staffAction(\'resetLine\', \'' + escapeHtml(s.employeeId) + '\')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 font-semibold cursor-pointer">ปลดล็อก LINE</button>' : '') +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function addNewStaffRow() {
+      if (!isAdminUser()) return;
+      var id = document.getElementById('newStaffId').value.trim();
+      var name = document.getElementById('newStaffName').value.trim();
+      var role = document.getElementById('newStaffRole').value;
+      if (!id) { showToast('กรุณากรอกรหัสพนักงาน'); return; }
+      callBackend('addOrApproveStaff', {
+        sessionToken: STATE.sessionToken,
+        actionType: 'add',
+        targetEmpId: id,
+        targetName: name,
+        targetRole: role
+      }).then(function(res) {
+        if (!res || !res.ok) { showToast((res && res.error) || 'เพิ่มไม่สำเร็จ'); return; }
+        document.getElementById('newStaffId').value = '';
+        document.getElementById('newStaffName').value = '';
+        renderStaffManager(res.staffList || []);
+        showToast('เพิ่มรายชื่อพนักงานแล้ว');
+      });
+    }
+
+    function staffAction(type, empId) {
+      if (!isAdminUser()) return;
+      callBackend('addOrApproveStaff', {
+        sessionToken: STATE.sessionToken,
+        actionType: type,
+        targetEmpId: empId
+      }).then(function(res) {
+        if (!res || !res.ok) { showToast((res && res.error) || 'ดำเนินการไม่สำเร็จ'); return; }
+        renderStaffManager(res.staffList || []);
+        showToast('อัปเดตสิทธิ์เรียบร้อย');
+      });
+    }
+  </script>
 </body>
 </html>
